@@ -25,6 +25,9 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Install Excel parser
+        run: python -m pip install openpyxl
+
       - name: Convert employees.xlsx to employees.json
         run: |
           python - <<'PY'
