@@ -1,4 +1,4 @@
-const DATA_FILE = 'employees.xlsx';
+const DATA_FILE = 'employees.json';
 
 function basePath(){
   const p = location.pathname;
@@ -7,7 +7,7 @@ function basePath(){
 }
 
 function clean(v){ return v == null ? '' : String(v).trim(); }
-function esc(v){return clean(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function esc(v){return clean(v).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));}
 function initials(name){return clean(name).split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0].toUpperCase()).join('')||'V';}
 function normalize(row){
   const out={}; Object.keys(row||{}).forEach(k=>out[k.trim().toLowerCase()]=row[k]);
@@ -15,10 +15,8 @@ function normalize(row){
 }
 async function loadEmployees(){
   const res=await fetch(basePath()+DATA_FILE+'?v='+Date.now(),{cache:'no-store'});
-  if(!res.ok) throw new Error('employees.xlsx not found');
-  const wb=XLSX.read(await res.arrayBuffer(),{type:'array'});
-  const ws=wb.Sheets[wb.SheetNames[0]];
-  return XLSX.utils.sheet_to_json(ws,{defval:''}).map(normalize).filter(r=>clean(r.id));
+  if(!res.ok) throw new Error('Employee data not found');
+  return (await res.json()).map(normalize).filter(r=>clean(r.id));
 }
 function cardUrl(id){return new URL('card.html?id='+encodeURIComponent(id),location.href).href;}
 function imageUrl(value){
@@ -57,7 +55,7 @@ async function start(){
     renderCard(e);
   }catch(err){
     const root=document.getElementById('card');
-    if(root) root.innerHTML=`<div class="error"><h2>Card unavailable</h2><p>${esc(err.message)}<br>Please check the employee ID or Excel file.</p></div>`;
+    if(root) root.innerHTML=`<div class="error"><h2>Card unavailable</h2><p>${esc(err.message)}<br>Please check the employee ID or employee data.</p></div>`;
     else document.querySelector('.landing-card').innerHTML='<span>Employee data is not available yet.</span>';
   }
 }
