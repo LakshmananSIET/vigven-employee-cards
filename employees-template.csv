@@ -1,2 +1,2 @@
 id,companyName,employeeName,rollNumber,designation,department,email,phone,linkedin,website,address,employeeImage,active,createdAt,updatedAt
-vq105k,VIGVEN,Lakshmanan M,VV-0001,Senior Software engineer,Software,,,https://www.linkedin.com/,https://www.vigven.com/,India,images/lakshmanan.jpg,TRUE,2026-09-08,2026-09-08
+vq105k,VIGVEN,Lakshmanan M,VV-0001,Senior Software engineer,Software,lakshmanan@vigven.com,9952883212,https://www.linkedin.com/,https://www.vigven.com/,India,images/lakshmanan.jpg,TRUE,2026-09-08,2026-09-08
