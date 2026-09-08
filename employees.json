@@ -1,0 +1,19 @@
+[
+  {
+    "id": "vq105k",
+    "companyName": "VIGVEN",
+    "employeeName": "Lakshmanan M",
+    "rollNumber": "VV-0001",
+    "designation": "Senior Software engineer",
+    "department": "Software",
+    "email": "lakshmanan@vigven.com",
+    "phone": "9952883212",
+    "linkedin": "",
+    "website": "",
+    "address": "",
+    "employeeImage": "",
+    "active": true,
+    "createdAt": "2026-09-08",
+    "updatedAt": "2026-09-08"
+  }
+]
