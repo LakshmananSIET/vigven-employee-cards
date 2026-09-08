@@ -24,6 +24,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Convert Excel data to JSON
+        run: |
+          python3 -m pip install --quiet openpyxl
+          python3 - <<'PY'
+          import json
+          from openpyxl import load_workbook
+
+          wb = load_workbook('employees.xlsx', data_only=True, read_only=True)
+          ws = wb[wb.sheetnames[0]]
+          rows = list(ws.iter_rows(values_only=True))
+          headers = [str(v).strip() if v is not None else '' for v in rows[0]]
+
+          data = []
+          for values in rows[1:]:
+              row = {}
+              for i, header in enumerate(headers):
+                  if header:
+                      value = values[i] if i < len(values) else ''
+                      if value is None:
+                          value = ''
+                      row[header] = value
+              if str(row.get('id', '')).strip():
+                  data.append(row)
+
+          with open('employees.json', 'w', encoding='utf-8') as f:
+              json.dump(data, f, ensure_ascii=False, indent=2, default=str)
+          PY
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
