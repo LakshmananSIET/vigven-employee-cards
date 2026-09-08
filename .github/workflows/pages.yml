@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Sync data and build GitHub Pages
 
 on:
   push:
@@ -6,31 +6,77 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
-  id-token: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  sync-and-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          enablement: true
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
-      - name: Deploy
-        id: deployment
-        uses: actions/deploy-pages@v4
+          python-version: '3.x'
+
+      - name: Convert employees.xlsx to employees.json
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import date, datetime
+          from openpyxl import load_workbook
+
+          wb = load_workbook('employees.xlsx', data_only=True, read_only=True)
+          ws = wb[wb.sheetnames[0]]
+          rows = list(ws.iter_rows(values_only=True))
+          if not rows:
+              raise SystemExit('employees.xlsx is empty')
+
+          headers = [str(x).strip() if x is not None else '' for x in rows[0]]
+          data = []
+          for values in rows[1:]:
+              item = {}
+              for i, header in enumerate(headers):
+                  if not header:
+                      continue
+                  value = values[i] if i < len(values) else ''
+                  if isinstance(value, (datetime, date)):
+                      value = value.isoformat()
+                  item[header] = '' if value is None else value
+              if str(item.get('id', '')).strip():
+                  data.append(item)
+
+          with open('employees.json', 'w', encoding='utf-8') as f:
+              json.dump(data, f, ensure_ascii=False, indent=2)
+              f.write('\n')
+          print(f'Generated employees.json with {len(data)} employees')
+          PY
+
+      - name: Commit generated JSON
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add employees.json
+          if git diff --cached --quiet; then
+            echo "employees.json is already up to date"
+          else
+            git commit -m "Update generated employee data"
+            git push
+          fi
+
+      - name: Request GitHub Pages rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl --fail-with-body -L \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "X-GitHub-Api-Version: 2026-03-10" \
+            https://api.github.com/repos/${{ github.repository }}/pages/builds
